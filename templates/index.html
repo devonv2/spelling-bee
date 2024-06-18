@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- comments are so ugly wtf -->
+    <meta charset="UTF-8">
+    <title>Anagrams</title>
+    <style>
+        .split {
+            width: 100%;
+            position: fixed;
+            top: 0;
+            overflow-x: hidden;
+            padding-top: 20px;
+        }
+        
+        /* Control the left side */
+        .left {
+            width: 100%;
+            left: 1;
+            padding:0;
+        }
+        
+        /* Control the right side */
+        .right {
+            width: 24%;
+            right: 0;
+            padding:5px;
+            background-color: bisque;
+            height:97.5%;
+            display: grid;
+            margin:0px;
+            grid-template-rows: 7% 90% 3%;
+            overflow-y: hidden;
+        }
+
+        .butt {
+            display:inline-block;
+        }
+
+        .results {
+            margin-top: 5px;
+            margin-bottom: 0px;
+            padding: 10px;
+            background-color: aliceblue;
+            width:fit-content;
+            display:inline-block;
+        }
+
+        .hints {
+            display:grid;
+            grid-template-columns: 32% 67%;
+            margin: 0px;
+            padding-left: 0px;
+            padding-right: 0px;
+            background-color: rgb(247, 226, 229);
+            width:74%;
+            height:100%;
+        }
+
+        #list-and-pangrams {
+            display: inline-block;
+            align-self: top;
+            background-color: rgb(245, 226, 247);
+            height: 410px;
+            overflow-y:scroll;
+        }
+
+        #lengths {
+            display: inline-block;
+            background-color:blue;
+            color:white;
+            height: 410px;
+            overflow-y: scroll;
+        }
+
+        #points h2, #points p {
+            margin: 0;
+            padding-left: 7px;
+        }
+
+
+        #found-words {
+            overflow-y: scroll;
+            background-color: blanchedalmond;
+            margin:0px;
+        }
+
+        #found-words h2 {
+            margin:0px;
+        }
+
+        #star {
+            align-self: bottom;
+            background-color:black;
+            color:white;
+            margin:0px;
+            align-self: bottom;
+        }
+      </style>
+        <script>
+            function shuffleLetters() {
+                // Send a POST request to /shuffle endpoint
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/shuffle", true);
+                xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                xhr.onload = function() {
+                    var response = JSON.parse(xhr.responseText);
+                    document.getElementById('letters').innerText = response.letters;
+                };
+                xhr.send();
+            }            
+        </script>
+</head>
+<body>
+<div class = "split left">
+    <h1>NOT a nyt spelling bee dupe...</h1>
+    <p> When entering letters, put the mandatory letter first. 
+        <br> Submit '0' for <b>random letters</b>.
+        <br> Submit '1' for today's <b>NYT letters</b>. </p>
+    <form method="get" action="/submit_letters">
+        <input type="text" name="letters" placeholder="Enter the letters" required>
+        <button type="submit">Submit</button>
+    </form>
+    {% if error %}
+        <p>{{ error }}</p>
+    {% endif %}
+    {% if l %}
+        <p> The letters are: <b id="letters">{{ l }} </b> <button type="button" onclick="shuffleLetters()">Shuffle</button> <br> 
+            The mandatory letter is: <b>{{ m }}</b> </p>
+        
+        <p></p>
+        <form method="post" action="/submit_word">
+            <input type="text" name="word" placeholder="Enter your word" required>
+            <button class = "butt" type="submit">Submit</button></form>{% if result %}<p class="results">{{ result }}</p>{% endif %}
+        <p></p>
+        <!--
+        <button type="button" onclick="getHints()">Hints</button>
+        <p> <span id="pairs">{{ pairs }}</span> </p>
+        -->
+        
+        <form method="post" action="/get_hints" class="butt">
+            <button type="submit" id="butt">Hints</button>
+        </form>
+        <form method="post" action="/reveal_words" class="butt">
+            <button type="submit" id="butt">Reveal Remaining Words</button>
+        </form>
+        {%if allwords %}
+        <p style="width:520px; background-color: aquamarine;">{{allwords}}</p>
+        {%endif%}
+        {% if pairs %}
+            <div class="hints">
+                <div id="list-and-pangrams">
+                    <h3 style="margin-bottom: 5px;"><u>Your two-letter list</u></h3>
+                    <ul style="margin-top: 0px;" id = "pairs">
+                        {% for key in pairs %}
+                        <li>{{ key }}: {{ pairs[key] }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% if pangrams[0] == 0 %}
+                    <p style="margin-top: 3px;">You found all the pangrams!</p>
+                    {% else %}
+                    <p style="margin-top: 3px;">There are {{ pangrams[0] }} pangrams remaining ({{ pangrams[1] }} perfect).</p>
+                    {%endif%}
+                </div>
+                <div id="lengths">
+                    <ul style="margin: 0px;">
+                    {% for key1 in lengths %}
+                        {% for key2 in lengths[key1] %}
+                            <li>{{lengths[key1][key2]}} words that start with "{{key1}}" are {{key2}} letters long</li>
+                        {% endfor %}
+                    {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+    
+    {% endif %}
+</div>
+
+<div class="split right">
+    <div id = "points"> 
+        <h2>Points: {{ points }} </h2>
+        <p>level</p>
+    </div>
+    <div id = "found-words">
+        <h2 style="margin-bottom:0px">Found Words:</h2>
+        <ul style="margin-top:0px">
+            {% for w in found %}
+            <li>{{ w }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div id="star">
+        <p style="margin:0px">* indicates pangram</p>
+    </div>
+</div>
+</body>
+</html>
